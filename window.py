@@ -7,7 +7,7 @@ from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
 
 
-def init_tk_window(min_size=(1500, 500)):
+def init_tk_window(min_size=(800, 900)):
     """Initializes a tkinter Tk, returns it."""
     window_frame = ThemedTk(theme='yaru')
     window_frame.title("LotLVoxBuilder")
@@ -47,7 +47,7 @@ def generate_output():
 
     TKWINDOW.output_full_size = output_vox.get_card_image(ATTRVAR.get())
 
-    TKWINDOW.output_image_label, TKWINDOW.output_image = init_displayed_image(TKWINDOW.right_frame,
+    TKWINDOW.output_image_label, TKWINDOW.output_image = init_displayed_image(TKWINDOW.bottom_frame,
                                                                               image=TKWINDOW.output_full_size,
                                                                               columnspan=3)
 
@@ -197,7 +197,7 @@ def init_file_select_pane(window):
 def init_output_pane(window):
     """Creates the output image pane."""
     output_frame = Frame(window)
-    output_frame.grid(column=2, row=0)
+    output_frame.grid(column=0, row=1, columnspan=2)
     output_frame.rowconfigure(0, weight=1)
     output_frame.rowconfigure(0, weight=0)
 
@@ -265,6 +265,11 @@ def load_vox():
     TKWINDOW.vox_ranks.set(loaded_vox.ranks)
     FILEPATH.set(loaded_vox.image_filepath)
 
+    if loaded_vox.is_signature is True:
+        TKWINDOW.vox_signature_variable.set(1)
+    else:
+        TKWINDOW.vox_signature_variable.set(0)
+
     action_widgets = TKWINDOW.action_1, TKWINDOW.action_2, TKWINDOW.action_3
 
     for each_widget in action_widgets:
@@ -318,10 +323,10 @@ class TkWindow:
         self.vox_attribute_variable = StringVar()
         self.vox_ranks = IntVar(value=1)
         self.vox_signature_variable = IntVar(value=0)
-        self.middle_frame, self.vox_goal, self.action_1, self.action_2, self.action_3 = \
+        self.right_frame, self.vox_goal, self.action_1, self.action_2, self.action_3 = \
             init_entry_pane(self.parent_frame, self.vox_name_variable, self.vox_attribute_variable, self.vox_ranks, self.vox_signature_variable)
 
-        self.right_frame, self.output_image_label, self.output_image = init_output_pane(self.parent_frame)
+        self.bottom_frame, self.output_image_label, self.output_image = init_output_pane(self.parent_frame)
 
         self.output_full_size = None
 
