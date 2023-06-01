@@ -1,13 +1,13 @@
 import vox
 from math import floor
-from tkinter import filedialog, StringVar, IntVar, Text, END
+from tkinter import filedialog, messagebox, StringVar, IntVar, Text, END
 from tkinter import Label as tkLabel
 from tkinter.ttk import Button, Entry, Frame, Label, OptionMenu, Checkbutton
 from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
 
 
-def init_tk_window(min_size=(800, 900)):
+def init_tk_window(min_size=(800, 912)):
     """Initializes a tkinter Tk, returns it."""
     window_frame = ThemedTk(theme='yaru')
     window_frame.title("LotLVoxBuilder")
@@ -24,32 +24,33 @@ INPUT_FONT = ("Arial", 10)
 FILEPATH = StringVar(value="imagefiles/defaultvox.png")
 ATTRVAR = IntVar(value=1)
 
+
 def generate_output():
     """Generates the output image from the variable data and displays it."""
     actions = []
-    for each_action in (TKWINDOW.action_1, TKWINDOW.action_2, TKWINDOW.action_3):
+    for each_action in (VOXPANE.action_1, VOXPANE.action_2, VOXPANE.action_3):
 
         if len(each_action.get("1.0", END).split()) > 0:
             actions.append(each_action.get("1.0", END))
 
-    if TKWINDOW.vox_signature_variable.get() > 0:
+    if VOXPANE.vox_signature_variable.get() > 0:
         is_signature_vox = True
     else:
         is_signature_vox = False
 
-    output_vox = vox.Vox(TKWINDOW.vox_name_variable.get(),
-                         vox.ATTR[TKWINDOW.vox_attribute_variable.get()],
-                         TKWINDOW.vox_goal.get("1.0", END),
-                         TKWINDOW.vox_ranks.get(), is_signature_vox,
+    output_vox = vox.Vox(VOXPANE.vox_name_variable.get(),
+                         vox.ATTR[VOXPANE.vox_attribute_variable.get()],
+                         VOXPANE.vox_goal.get("1.0", END),
+                         VOXPANE.vox_ranks.get(), is_signature_vox,
                          *actions,
                          vox_filepath=FILEPATH.get()
                          )
 
-    TKWINDOW.output_full_size = output_vox.get_card_image(ATTRVAR.get())
+    VOXPANE.output_full_size = output_vox.get_card_image(ATTRVAR.get())
 
-    TKWINDOW.output_image_label, TKWINDOW.output_image = init_displayed_image(TKWINDOW.bottom_frame,
-                                                                              image=TKWINDOW.output_full_size,
-                                                                              columnspan=3)
+    VOXPANE.output_image_label, VOXPANE.output_image = init_displayed_image(VOXPANE.bottom_frame,
+                                                                            image=VOXPANE.output_full_size,
+                                                                            columnspan=3)
 
     return output_vox
 
@@ -99,7 +100,6 @@ def init_entry_pane(window, vox_name_var, vox_attribute_var, vox_ranks_var, vox_
     action_1_widget = init_text_widget(main_frame, INPUT_FONT, 60, 4, column=1, row=4, sticky="nsew")
     action_2_widget = init_text_widget(main_frame, INPUT_FONT, 60, 4, column=1, row=5, sticky="nsew")
     action_3_widget = init_text_widget(main_frame, INPUT_FONT, 60, 4, column=1, row=6, sticky="nsew")
-
 
     return main_frame, goal_widget, action_1_widget, action_2_widget, action_3_widget
 
@@ -212,15 +212,13 @@ def init_output_pane(window):
     export_button = Button(output_frame, text="Export PNG", command=save_output)
     export_button.grid(column=2, row=1)
 
-
-
     return output_frame, image_label, image
 
 
 def init_parent_frame(window):
     """Creates an empty parent frame for the other content frames to occupy."""
     content_frame = Frame(window, padding=20)
-    content_frame.grid(column=0, row=0, columnspan=2, sticky="nsew")
+    content_frame.grid(column=0, row=0, sticky="nsew")
 
     content_frame.columnconfigure(0, weight=1)
     content_frame.columnconfigure(1, weight=1)
@@ -239,51 +237,87 @@ def init_text_widget(parent, font, width, height, **kwargs):
 
 def save_output():
     """Saves the output image to a file."""
+    output_filepath = filedialog.asksaveasfilename(defaultextension=".png")
+    if output_filepath == "":
+        return
+
     generate_output()
 
-    output_filepath = filedialog.asksaveasfilename(defaultextension=".png")
-
-    TKWINDOW.output_full_size.save(output_filepath)
+    VOXPANE.output_full_size.save(output_filepath)
 
 
 def save_vox():
-    generated_vox = generate_output()
-
     save_filepath = filedialog.asksaveasfilename(defaultextension=".vox")
+    if save_filepath == "":
+        return
+
+    generated_vox = generate_output()
 
     generated_vox.save_json(save_filepath)
 
 
 def load_vox():
+    # Load the .vox file
     load_filepath = filedialog.askopenfilename(defaultextension=".vox")
+    # Exit if no file is selected
+    if load_filepath == "":
+        return
 
+    # Load a vox object from the .vox
     loaded_vox = vox.load_from_json(load_filepath)
 
-    TKWINDOW.vox_name_variable.set(loaded_vox.name)
-    TKWINDOW.vox_attribute_variable.set(loaded_vox.attribute[0])
-    set_widget_text(TKWINDOW.vox_goal, loaded_vox.goal)
-    TKWINDOW.vox_ranks.set(loaded_vox.ranks)
+    # Set basic parameters in the window to match the loaded vox
+    VOXPANE.vox_name_variable.set(loaded_vox.name)
+    VOXPANE.vox_attribute_variable.set(loaded_vox.attribute[0])
+    set_widget_text(VOXPANE.vox_goal, loaded_vox.goal)
+    VOXPANE.vox_ranks.set(loaded_vox.ranks)
     FILEPATH.set(loaded_vox.image_filepath)
 
+    # Set up the flags of the signature skill checkbox
     if loaded_vox.is_signature is True:
-        TKWINDOW.vox_signature_variable.set(1)
+        VOXPANE.vox_signature_variable.set(1)
     else:
-        TKWINDOW.vox_signature_variable.set(0)
+        VOXPANE.vox_signature_variable.set(0)
 
-    action_widgets = TKWINDOW.action_1, TKWINDOW.action_2, TKWINDOW.action_3
+    # Apply loaded actions, step 1: we need a tuple of the action text boxes from the UI
+    action_widgets = VOXPANE.action_1, VOXPANE.action_2, VOXPANE.action_3
 
+    # Clear out the values in the text boxes
     for each_widget in action_widgets:
         each_widget.delete(1.0, END)
 
+    # Apply the new ones
     for each_widget, each_action in zip(action_widgets, loaded_vox.actions):
         set_widget_text(each_widget, each_action)
+
+    # Re-update the generated Vox image
+    generate_output()
+
+    # update the vox portrait in the file selector
+    update_loaded_portrait()
 
 
 def select_new_filepath():
     """Selects a new filepath for the vox portrait."""
-    new_filepath = filedialog.askopenfilename(parent=TKWINDOW.window, title="Select Vox portrait...", initialdir="imagefiles")
-    FILEPATH.set(new_filepath)
-    TKWINDOW.portrait_image_label, TKWINDOW.portrait_image = init_displayed_image(TKWINDOW.left_frame, filepath=new_filepath, columnspan=2)
+    new_filepath = filedialog.askopenfilename(parent=VOXPANE.window, title="Select Vox portrait...")
+    if new_filepath == "":
+        return
+
+    portrait_image = Image.open(new_filepath)
+
+    if portrait_image.width <= 512 and portrait_image.height <= 768:
+        FILEPATH.set(new_filepath)
+        update_loaded_portrait()
+    else:
+        messagebox.showwarning(title="Wrong File Size",
+                               message="The selected image is too large. Please select a Vox portrait that is no larger than 512x768 pixels.")
+
+def update_loaded_portrait():
+    """Updates the portrait selector by loading from the FILEPATH"""
+
+    VOXPANE.portrait_image_label, VOXPANE.portrait_image = init_displayed_image(VOXPANE.left_frame,
+                                                                                filepath=FILEPATH.get(),
+                                                                                columnspan=2)
 
 
 def add_1_attribute():
@@ -297,13 +331,13 @@ def subtract_1_attribute():
 
 
 def add_1_rank():
-    TKWINDOW.vox_ranks.set(TKWINDOW.vox_ranks.get() + 1)
+    VOXPANE.vox_ranks.set(VOXPANE.vox_ranks.get() + 1)
 
 
 def subtract_1_rank():
-    current_value = TKWINDOW.vox_ranks.get()
+    current_value = VOXPANE.vox_ranks.get()
     if current_value > 1:
-        TKWINDOW.vox_ranks.set(current_value - 1)
+        VOXPANE.vox_ranks.set(current_value - 1)
 
 
 def set_widget_text(text_widget, value):
@@ -312,7 +346,7 @@ def set_widget_text(text_widget, value):
     text_widget.insert(END, value)
 
 
-class TkWindow:
+class VoxPane:
     def __init__(self):
         self.window = ROOT
         self.parent_frame = init_parent_frame(self.window)
@@ -331,7 +365,7 @@ class TkWindow:
         self.output_full_size = None
 
 
-TKWINDOW = TkWindow()
+VOXPANE = VoxPane()
 
 if __name__ == "__main__":
-    TKWINDOW.window.mainloop()
+    VOXPANE.window.mainloop()
