@@ -91,6 +91,40 @@ def get_title_field_image(vox_title, vox_attribute_label, vox_color, vox_attribu
     return title_field_image
 
 
+def get_mini_title_field_image(vox, vox_attribute_bonus):
+    """Creates the Title field image for later compositing onto the mini version of the vox."""
+    title_field_image = Image.new("RGBA", (512, 100), (*vox.attribute[1], 180))
+    label_editor = ImageDraw.Draw(title_field_image)
+
+    # If it is a signature vox, add the icon
+    if vox.is_signature:
+        icon_image = Image.open("imagefiles/signature.png")
+        title_field_image.alpha_composite(icon_image, (20, 35))
+
+    # Draw the totalbox
+    title_field_image.paste(Image.open("imagefiles/totalbox.png"), (434, 0))
+
+    # Draw the vox title
+    label_editor.font = TITLE_FONT_REDUCED
+    vox_title_length = label_editor.textlength(vox.name.upper())
+    x_offset = 178
+    if vox.is_signature:
+        x_offset += 70
+
+    if vox_title_length + 158 < 512 or (vox_title_length + 78 < 512 and not vox.is_signature):
+        label_editor.text((x_offset, 60), vox.name.upper(), fill=TEXT_COLOR_DARK, anchor="ms")
+    else:
+        vox_goal_lines = chop_into_halves(vox.name)
+        label_editor.text((x_offset, 15), vox_goal_lines[0], fill=TEXT_COLOR_DARK, anchor="mt")
+        label_editor.text((x_offset, 55), vox_goal_lines[1], fill=TEXT_COLOR_DARK, anchor="mt")
+
+    skill_total = vox_attribute_bonus + vox.ranks + vox.get_other_bonuses()
+    label_editor.font = TITLE_FONT
+    label_editor.text((473, 80), str(skill_total), fill=TEXT_COLOR_LIGHT, anchor="ms")
+
+    return title_field_image
+
+
 def get_goal_field_image(vox_goal):
     goal_field_image = Image.new("RGBA", (768, 72), UNDERTEXT_COLOR)
     label_editor = ImageDraw.Draw(goal_field_image)

@@ -19,8 +19,10 @@ def init_tk_window(min_size=(800, 912)):
 
     return window_frame
 
+
 ROOT = init_tk_window()
 INPUT_FONT = ("Arial", 10)
+INPUT_FONT_EXPANDED = ("Arial", 18, "bold")
 FILEPATH = StringVar(value="imagefiles/defaultvox.png")
 ATTRVAR = IntVar(value=1)
 
@@ -118,12 +120,22 @@ def init_attribute_frame(parent, vox_attribute_var, column, row):
     subtract_button = Button(attribute_frame, text="-", command=subtract_1_attribute, width=1)
     subtract_button.grid(column=1, row=0)
 
-    attribute_value_display = Entry(attribute_frame, textvariable=ATTRVAR, font=('Arial', 10), width=2)
+    attribute_value_display = Entry(attribute_frame, textvariable=ATTRVAR, font=INPUT_FONT, width=2)
     attribute_value_display.config(state="readonly")
     attribute_value_display.grid(column=2, row=0, sticky="ew")
 
     add_button = Button(attribute_frame, text="+", command=add_1_attribute, width=1)
     add_button.grid(column=3, row=0)
+
+
+def init_name_frame(parent, char_name_variable):
+    name_frame = Frame(parent)
+    name_frame.grid(column=0, row=0, sticky="ew")
+
+    Label(name_frame, text="Character Name:").grid(column=0, row=0)
+    init_entry_widget(name_frame, char_name_variable, INPUT_FONT, column=1, row=0, sticky="w")
+
+    return name_frame
 
 
 def init_ranks_frame(parent, vox_ranks_var, vox_signature_var, column, row):
@@ -137,7 +149,7 @@ def init_ranks_frame(parent, vox_ranks_var, vox_signature_var, column, row):
     subtract_button = Button(ranks_frame, text="-", command=subtract_1_rank, width=1)
     subtract_button.grid(column=1, row=0)
 
-    attribute_value_display = Entry(ranks_frame, textvariable=vox_ranks_var, font=('Arial', 10), width=2)
+    attribute_value_display = Entry(ranks_frame, textvariable=vox_ranks_var, font=INPUT_FONT, width=2)
     attribute_value_display.config(state="readonly")
     attribute_value_display.grid(column=2, row=0, sticky="ew")
 
@@ -154,8 +166,27 @@ def init_checkbox(parent, variable, text, **kwargs):
 
 
 def init_dropdown(parent, variable, column, row):
-    dropdown_menu = OptionMenu(parent, variable, "Intellect", *vox.ATTR.keys())
+    dropdown_menu = OptionMenu(parent, variable, "Cerebra", *vox.ATTR.keys())
     dropdown_menu.grid(column=column, row=row)
+
+
+def init_attunement_widget(parent, attribute_name, attribute_var, **kwargs):
+    widget_frame = Frame(parent)
+    widget_frame.grid(**kwargs)
+
+    # Place the label
+    Label(widget_frame, text=attribute_name).grid(column=0, row=0, columnspan=2)
+
+    # Place the entry widget
+    attribute_entry = Entry(widget_frame, width=2, textvariable=attribute_var, font=INPUT_FONT_EXPANDED, justify="center")
+    attribute_entry.grid(column=0, row=1, columnspan=2)
+
+    # Place Buttons
+    subtract_button = Button(widget_frame, text="-", command=lambda: intvar_minus_1(attribute_var), width=1)
+    subtract_button.grid(column=0, row=2)
+
+    add_button = Button(widget_frame, text="+", command=lambda: intvar_plus_1(attribute_var), width=1)
+    add_button.grid(column=1, row=2)
 
 
 def init_entry_widget(parent, variable, font, **kwargs):
@@ -176,7 +207,7 @@ def init_file_select_pane(window):
 
     # Create the display entry for the filepath selector
 
-    file_select_entry = Entry(file_select_frame, textvariable=FILEPATH, font=('Arial', 10))
+    file_select_entry = Entry(file_select_frame, textvariable=FILEPATH, font=INPUT_FONT)
     file_select_entry.config(state="readonly")
     file_select_entry.grid(column=0, row=1, sticky="ew")
 
@@ -192,6 +223,21 @@ def init_file_select_pane(window):
     load_vox_button.grid(column=1, row=2)
 
     return file_select_frame, image_label, image
+
+
+def init_attunements_frame(parent, attunement_vars):
+    attunements_frame = Frame(parent)
+    attunements_frame.grid(column=0, row=1)
+
+    attunement_dict_keys = sorted(attunement_vars.keys())
+
+    place_in_column = 0
+
+    for each_key in attunement_dict_keys:
+        init_attunement_widget(attunements_frame, each_key, attunement_vars[each_key], column=place_in_column, row=0)
+        place_in_column += 1
+
+    return attunements_frame
 
 
 def init_output_pane(window):
@@ -215,10 +261,18 @@ def init_output_pane(window):
     return output_frame, image_label, image
 
 
-def init_parent_frame(window):
+def init_character_pane(window):
     """Creates an empty parent frame for the other content frames to occupy."""
     content_frame = Frame(window, padding=20)
     content_frame.grid(column=0, row=0, sticky="nsew")
+
+    return content_frame
+
+
+def init_vox_pane(window):
+    """Creates an empty parent frame for the other content frames to occupy."""
+    content_frame = Frame(window, padding=20)
+    content_frame.grid(column=1, row=0, sticky="nsew")
 
     content_frame.columnconfigure(0, weight=1)
     content_frame.columnconfigure(1, weight=1)
@@ -299,7 +353,7 @@ def load_vox():
 
 def select_new_filepath():
     """Selects a new filepath for the vox portrait."""
-    new_filepath = filedialog.askopenfilename(parent=VOXPANE.window, title="Select Vox portrait...")
+    new_filepath = filedialog.askopenfilename(parent=ROOT, title="Select Vox portrait...")
     if new_filepath == "":
         return
 
@@ -312,6 +366,7 @@ def select_new_filepath():
         messagebox.showwarning(title="Wrong File Size",
                                message="The selected image is too large. Please select a Vox portrait that is no larger than 512x768 pixels.")
 
+
 def update_loaded_portrait():
     """Updates the portrait selector by loading from the FILEPATH"""
 
@@ -321,13 +376,11 @@ def update_loaded_portrait():
 
 
 def add_1_attribute():
-    ATTRVAR.set(ATTRVAR.get() + 1)
+    intvar_plus_1(ATTRVAR)
 
 
 def subtract_1_attribute():
-    current_value = ATTRVAR.get()
-    if current_value > 0:
-        ATTRVAR.set(current_value - 1)
+    intvar_minus_1(ATTRVAR)
 
 
 def add_1_rank():
@@ -340,16 +393,46 @@ def subtract_1_rank():
         VOXPANE.vox_ranks.set(current_value - 1)
 
 
+def intvar_plus_1(variable):
+    """Adds 1 to the given intvar."""
+    variable.set(variable.get() + 1)
+
+
+def intvar_minus_1(variable):
+    """Subtracts 1 from the given intvar. Minimum result of 0."""
+    current_value = variable.get()
+    if current_value > 0:
+        variable.set(current_value - 1)
+
+
 def set_widget_text(text_widget, value):
     """Overwrites a tkinter text widget's contents with the passed value."""
     text_widget.delete(1.0, END)
     text_widget.insert(END, value)
 
 
+class CharacterPane:
+    def __init__(self):
+        self.parent_frame = init_character_pane(ROOT)
+
+        self.char_name_variable = StringVar()
+        self.name_frame = init_name_frame(self.parent_frame, self.char_name_variable)
+
+        self.attunement_variables = {"Cerebra": IntVar(value=0),
+                                     "Benedictum": IntVar(value=0),
+                                     "Myomesmer": IntVar(value=0),
+                                     "Psychoanima": IntVar(value=0),
+                                     "Visiospatia": IntVar(value=0),
+                                     "Endopulse": IntVar(value=0)}
+
+        self.attunements_frame = init_attunements_frame(self.parent_frame, self.attunement_variables)
+
+        # self.vox_table = VoxTable()
+
+
 class VoxPane:
     def __init__(self):
-        self.window = ROOT
-        self.parent_frame = init_parent_frame(self.window)
+        self.parent_frame = init_vox_pane(ROOT)
 
         self.left_frame, self.portrait_image_label, self.portrait_image = init_file_select_pane(self.parent_frame)
 
@@ -366,6 +449,7 @@ class VoxPane:
 
 
 VOXPANE = VoxPane()
+CHARPANE = CharacterPane()
 
 if __name__ == "__main__":
-    VOXPANE.window.mainloop()
+    ROOT.mainloop()
