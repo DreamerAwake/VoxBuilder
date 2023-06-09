@@ -6,10 +6,6 @@ from tkinter import filedialog, messagebox, StringVar, IntVar
 from tkinter.ttk import Button, Entry, Frame, Label
 
 
-def callback_vox_table_reset(*args):
-    CHARPANE.vox_table.reset_vox_cells()
-
-
 def get_attunement_vars_dict():
     attunement_variables = {"Cerebra": IntVar(value=0),
                                  "Benedictum": IntVar(value=0),
@@ -139,12 +135,10 @@ class CharacterPane:
 
         self.vox_table = VoxTable(self, self.parent_frame, self.character)
 
-        # A traced variable that can be triggered from the cell level anc calls to load a vox.
+        # A traced variable that can be triggered from the cell level and calls to load a vox.
         self.vox_awaits_load_from_table = IntVar(value=0)
         self.vox_to_load = None
 
-        for each_value in self.attunement_variables.values():
-            each_value.trace('w', callback_vox_table_reset)
 
     def read_from_character(self):
         """Updates the tkinter values to match those found in the character object, usually after loading."""

@@ -1,6 +1,7 @@
 from math import floor
 from tkinter import Text
 from tkinter import Label as tkLabel
+from tkextensions import tktext_eventonmodify as tkext
 from tkinter.ttk import Entry
 from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
@@ -51,7 +52,7 @@ def init_entry_widget(parent, variable, font, **kwargs):
 
 def init_text_widget(parent, font, width, height, **kwargs):
     """Creates the flavor text input widget"""
-    text_widget = Text(parent, width=width, height=height, wrap="word", font=font)
+    text_widget = tkext.CustomText(parent, width=width, height=height, wrap="word", font=font)
     text_widget.grid(**kwargs)
 
     return text_widget

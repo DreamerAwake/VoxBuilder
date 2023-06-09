@@ -27,7 +27,16 @@ def add_vox_to_character():
     CHARPANE.vox_table.reset_vox_cells()
 
 
-def generate_output(input_vox=None):
+def callback_vox_table_reset(*args):
+    CHARPANE.vox_table.reset_vox_cells()
+
+
+def callback_table_reset_and_regenerate(*args):
+    callback_vox_table_reset()
+    generate_output()
+
+
+def generate_output(*args, input_vox=None, unlock=False):
     """Generates the output image from the variable data and displays it."""
     if input_vox is None:
         output_vox = get_output_vox()
@@ -35,16 +44,18 @@ def generate_output(input_vox=None):
     else:
         output_vox = input_vox
 
-    vox_attribute = VOXPANE.vox_attribute_variable.get()
+    if unlock:
+        VOXPANE.lock_generator = False
 
-    VOXPANE.output_full_size = output_vox.get_card_image(CHARPANE.attunement_variables[vox_attribute].get())
+    if not VOXPANE.lock_generator:
+        vox_attribute = VOXPANE.vox_attribute_variable.get()
 
-    VOXPANE.output_image_label, VOXPANE.output_image = win.init_displayed_image(VOXPANE.bottom_frame,
-                                                                                image=VOXPANE.output_full_size,
-                                                                                columnspan=4,
-                                                                                pady=20)
+        VOXPANE.output_full_size = output_vox.get_card_image(CHARPANE.attunement_variables[vox_attribute].get())
 
-    print(win.ROOT.winfo_width(), win.ROOT.winfo_height())
+        VOXPANE.output_image_label, VOXPANE.output_image = win.init_displayed_image(VOXPANE.bottom_frame,
+                                                                                    image=VOXPANE.output_full_size,
+                                                                                    columnspan=3,
+                                                                                    pady=20)
 
     return output_vox
 
@@ -190,19 +201,16 @@ def init_output_pane(window):
     output_frame.rowconfigure(0, weight=1)
     output_frame.rowconfigure(0, weight=0)
 
-    image_label, image = win.init_displayed_image(output_frame, filepath="imagefiles/EXAMPLE.png", columnspan=4, pady=20)
-
-    output_button = Button(output_frame, text="Generate", command=generate_output)
-    output_button.grid(column=0, row=1)
+    image_label, image = win.init_displayed_image(output_frame, filepath="imagefiles/EXAMPLE.png", columnspan=3, pady=20)
 
     add_button = Button(output_frame, text="Add to character", command=add_vox_to_character)
-    add_button.grid(column=1, row=1)
+    add_button.grid(column=0, row=1)
 
     save_button = Button(output_frame, text="Save to file", command=save_vox)
-    save_button.grid(column=2, row=1)
+    save_button.grid(column=1, row=1)
 
     export_button = Button(output_frame, text="Export PNG", command=save_output)
-    export_button.grid(column=3, row=1)
+    export_button.grid(column=2, row=1)
 
     return output_frame, image_label, image
 
@@ -253,16 +261,15 @@ def init_vox_pane(window):
 def load_from_callback(*args):
     # Value 1 indicates a full load from the right click -> edit menu
     if CHARPANE.vox_awaits_load_from_table.get() == 1:
+        CHARPANE.vox_awaits_load_from_table.set(0)
         VOXPANE.read_from_vox(CHARPANE.vox_to_load)
         CHARPANE.vox_to_load = None
-        CHARPANE.vox_awaits_load_from_table.set(0)
 
     # Value 2 indicates that only the generated image should be replaced, from left click inspect
     elif CHARPANE.vox_awaits_load_from_table.get() == 2:
-        generate_output(CHARPANE.vox_to_load)
-        CHARPANE.vox_to_load = None
         CHARPANE.vox_awaits_load_from_table.set(0)
-
+        generate_output(input_vox=CHARPANE.vox_to_load)
+        CHARPANE.vox_to_load = None
 
 def load_vox():
     # Load the .vox file
@@ -340,13 +347,15 @@ def update_loaded_portrait():
 
 class VoxPane:
     def __init__(self):
+        self.lock_generator = False  # Lock out for the image generator to prevent excess rendering
+
         self.parent_frame = init_vox_pane(win.ROOT)
 
         self.left_frame, self.portrait_image_label, self.portrait_image = init_file_select_pane(self.parent_frame)
 
         self.vox_name_variable = StringVar()
         self.vox_attribute_variable = StringVar()
-        self.vox_attribute_variable.trace('w', update_attribute_intvar)
+        self.vox_attribute_variable.trace_add('write', update_attribute_intvar)
         self.vox_ranks = IntVar(value=1)
         self.vox_signature_variable = IntVar(value=0)
         self.right_frame, self.attribute_frame, self.vox_goal, self.action_1, self.action_2, self.action_3 = \
@@ -358,6 +367,8 @@ class VoxPane:
 
 
     def read_from_vox(self, vox_obj):
+        self.lock_generator = True  # Lock the image generator to prevent excess rendering
+
         self.vox_name_variable.set(vox_obj.name)
         self.vox_attribute_variable.set(vox_obj.attribute[0])
         set_widget_text(self.vox_goal, vox_obj.goal)
@@ -382,11 +393,26 @@ class VoxPane:
             set_widget_text(each_widget, each_action)
 
         # Re-update the generated Vox image
-        generate_output()
+        generate_output(unlock=True)
 
         # update the vox portrait in the file selector
         update_loaded_portrait()
 
 
 VOXPANE = VoxPane()
-CHARPANE.vox_awaits_load_from_table.trace('w', load_from_callback)
+CHARPANE.vox_awaits_load_from_table.trace_add('write', load_from_callback)  # Create the trace for the open vox right click
+
+# Create the re-generate traces for the vox variables
+VOXPANE.vox_name_variable.trace('w', generate_output)
+VOXPANE.vox_attribute_variable.trace('w', generate_output)
+VOXPANE.vox_ranks.trace('w', generate_output)
+VOXPANE.vox_signature_variable.trace('w', generate_output)
+FILEPATH.trace('w', generate_output)
+VOXPANE.vox_goal.bind('<<TextModified>>', generate_output)
+VOXPANE.action_1.bind('<<TextModified>>', generate_output)
+VOXPANE.action_2.bind('<<TextModified>>', generate_output)
+VOXPANE.action_3.bind('<<TextModified>>', generate_output)
+
+
+for each_value in CHARPANE.attunement_variables.values():
+    each_value.trace_add('write', callback_table_reset_and_regenerate)
