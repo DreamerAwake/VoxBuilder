@@ -3,14 +3,54 @@ import vox
 from character_pane_ui import CHARPANE
 from tkinter import filedialog, messagebox, StringVar, IntVar, END
 from tkinter.ttk import Button, Entry, Frame, Label, OptionMenu, Checkbutton
-from PIL import Image, ImageTk
+from PIL import Image
 
 
 FILEPATH = StringVar(value="imagefiles/defaultvox.png")
 
 
-def generate_output():
+def add_vox_to_character():
+    add_vox = get_output_vox()
+
+    for each_vox in CHARPANE.character.voxes:
+        if add_vox.name == each_vox.name:
+            do_replace = messagebox.askyesno(message=f"There is already a Vox named {add_vox.name}.\n"
+                                                     f"Remove the old Vox and replace it with this one?")
+
+            if do_replace:
+                CHARPANE.character.remove_vox_with_name(add_vox.name)
+
+            else:
+                return False
+
+    CHARPANE.character.voxes.append(add_vox)
+    CHARPANE.vox_table.reset_vox_cells()
+
+
+def generate_output(input_vox=None):
     """Generates the output image from the variable data and displays it."""
+    if input_vox is None:
+        output_vox = get_output_vox()
+
+    else:
+        output_vox = input_vox
+
+    vox_attribute = VOXPANE.vox_attribute_variable.get()
+
+    VOXPANE.output_full_size = output_vox.get_card_image(CHARPANE.attunement_variables[vox_attribute].get())
+
+    VOXPANE.output_image_label, VOXPANE.output_image = win.init_displayed_image(VOXPANE.bottom_frame,
+                                                                                image=VOXPANE.output_full_size,
+                                                                                columnspan=4,
+                                                                                pady=20)
+
+    print(win.ROOT.winfo_width(), win.ROOT.winfo_height())
+
+    return output_vox
+
+
+def get_output_vox():
+    """Generates a vox object from the current pane state."""
     actions = []
     for each_action in (VOXPANE.action_1, VOXPANE.action_2, VOXPANE.action_3):
 
@@ -32,12 +72,6 @@ def generate_output():
                          vox_filepath=FILEPATH.get()
                          )
 
-    VOXPANE.output_full_size = output_vox.get_card_image(CHARPANE.attunement_variables[output_vox_attribute].get())
-
-    VOXPANE.output_image_label, VOXPANE.output_image = win.init_displayed_image(VOXPANE.bottom_frame,
-                                                                            image=VOXPANE.output_full_size,
-                                                                            columnspan=3)
-
     return output_vox
 
 
@@ -55,12 +89,30 @@ def init_attribute_frame(parent, vox_attribute_var, column, row):
     subtract_button = Button(attribute_frame, text="-", command=subtract_1_attribute, width=1)
     subtract_button.grid(column=1, row=0)
 
-    attribute_value_display = Entry(attribute_frame, textvariable=CHARPANE.attunement_variables[vox_attribute_var.get()], font=win.INPUT_FONT, width=2)
-    attribute_value_display.config(state="readonly")
-    attribute_value_display.grid(column=2, row=0, sticky="ew")
+    init_attribute_entry(attribute_frame, vox_attribute_var)
 
     add_button = Button(attribute_frame, text="+", command=add_1_attribute, width=1)
     add_button.grid(column=3, row=0)
+
+    return attribute_frame
+
+
+def add_1_attribute():
+    win.intvar_plus_1(CHARPANE.attunement_variables[VOXPANE.vox_attribute_variable.get()])
+
+
+def subtract_1_attribute():
+    win.intvar_minus_1(CHARPANE.attunement_variables[VOXPANE.vox_attribute_variable.get()])
+
+
+def init_attribute_entry(parent, vox_attribute_var):
+
+    attribute_value_display = Entry(parent,
+                                    textvariable=CHARPANE.attunement_variables[vox_attribute_var.get()],
+                                    font=win.INPUT_FONT,
+                                    width=2)
+    attribute_value_display.config(state="readonly")
+    attribute_value_display.grid(column=2, row=0, sticky="ew")
 
 
 def init_checkbox(parent, variable, text, **kwargs):
@@ -70,7 +122,7 @@ def init_checkbox(parent, variable, text, **kwargs):
 
 
 def init_dropdown(parent, variable, column, row):
-    dropdown_menu = OptionMenu(parent, variable, "Cerebra", *vox.ATTR.keys())
+    dropdown_menu = OptionMenu(parent, variable, "Benedictum", *vox.ATTR.keys())
     dropdown_menu.grid(column=column, row=row)
 
 
@@ -92,14 +144,14 @@ def init_entry_pane(window, vox_name_var, vox_attribute_var, vox_ranks_var, vox_
 
     # Create frames and widgets
     win.init_entry_widget(main_frame, vox_name_var, win.INPUT_FONT, column=1, row=0, sticky="w")
-    init_attribute_frame(main_frame, vox_attribute_var, column=1, row=1)
+    attribute_frame = init_attribute_frame(main_frame, vox_attribute_var, column=1, row=1)
     init_ranks_frame(main_frame, vox_ranks_var, vox_signature_var, column=1, row=2)
     goal_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 40, 3, column=1, row=3, sticky="w")
     action_1_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=4, sticky="nsew")
     action_2_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=5, sticky="nsew")
     action_3_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=6, sticky="nsew")
 
-    return main_frame, goal_widget, action_1_widget, action_2_widget, action_3_widget
+    return main_frame, attribute_frame, goal_widget, action_1_widget, action_2_widget, action_3_widget
 
 
 def init_file_select_pane(window):
@@ -113,21 +165,20 @@ def init_file_select_pane(window):
     file_select_frame.columnconfigure(1, weight=0)
 
     # Create the display entry for the filepath selector
-
     file_select_entry = Entry(file_select_frame, textvariable=FILEPATH, font=win.INPUT_FONT)
     file_select_entry.config(state="readonly")
-    file_select_entry.grid(column=0, row=1, sticky="ew")
+    file_select_entry.grid(column=0, row=2, sticky="ew", columnspan=2)
 
     # Fetch and display the image
-    image_label, image = win.init_displayed_image(file_select_frame, filepath=FILEPATH.get(), columnspan=2)
+    image_label, image = win.init_displayed_image(file_select_frame, filepath=FILEPATH.get(), image_scale=0.35, columnspan=2)
 
     # Create the button that searches for the filepath
-    file_search_button = Button(file_select_frame, text="Browse", command=select_new_filepath)
-    file_search_button.grid(column=1, row=1)
+    file_search_button = Button(file_select_frame, text="Load Portrait Image", command=select_new_filepath)
+    file_search_button.grid(column=0, row=1)
 
     # Create the button that loads a vox from file
-    load_vox_button = Button(file_select_frame, text="Load .vox file", command=load_vox)
-    load_vox_button.grid(column=1, row=2)
+    load_vox_button = Button(file_select_frame, text="Load Vox File", command=load_vox)
+    load_vox_button.grid(column=1, row=1)
 
     return file_select_frame, image_label, image
 
@@ -139,16 +190,19 @@ def init_output_pane(window):
     output_frame.rowconfigure(0, weight=1)
     output_frame.rowconfigure(0, weight=0)
 
-    image_label, image = win.init_displayed_image(output_frame, filepath="imagefiles/EXAMPLE.png", columnspan=3)
+    image_label, image = win.init_displayed_image(output_frame, filepath="imagefiles/EXAMPLE.png", columnspan=4, pady=20)
 
     output_button = Button(output_frame, text="Generate", command=generate_output)
     output_button.grid(column=0, row=1)
 
-    save_button = Button(output_frame, text="Save Vox", command=save_vox)
-    save_button.grid(column=1, row=1)
+    add_button = Button(output_frame, text="Add to character", command=add_vox_to_character)
+    add_button.grid(column=1, row=1)
+
+    save_button = Button(output_frame, text="Save to file", command=save_vox)
+    save_button.grid(column=2, row=1)
 
     export_button = Button(output_frame, text="Export PNG", command=save_output)
-    export_button.grid(column=2, row=1)
+    export_button.grid(column=3, row=1)
 
     return output_frame, image_label, image
 
@@ -196,6 +250,20 @@ def init_vox_pane(window):
     return content_frame
 
 
+def load_from_callback(*args):
+    # Value 1 indicates a full load from the right click -> edit menu
+    if CHARPANE.vox_awaits_load_from_table.get() == 1:
+        VOXPANE.read_from_vox(CHARPANE.vox_to_load)
+        CHARPANE.vox_to_load = None
+        CHARPANE.vox_awaits_load_from_table.set(0)
+
+    # Value 2 indicates that only the generated image should be replaced, from left click inspect
+    elif CHARPANE.vox_awaits_load_from_table.get() == 2:
+        generate_output(CHARPANE.vox_to_load)
+        CHARPANE.vox_to_load = None
+        CHARPANE.vox_awaits_load_from_table.set(0)
+
+
 def load_vox():
     # Load the .vox file
     load_filepath = filedialog.askopenfilename(defaultextension=".vox")
@@ -207,34 +275,7 @@ def load_vox():
     loaded_vox = vox.load_from_json(load_filepath)
 
     # Set basic parameters in the window to match the loaded vox
-    VOXPANE.vox_name_variable.set(loaded_vox.name)
-    VOXPANE.vox_attribute_variable.set(loaded_vox.attribute[0])
-    set_widget_text(VOXPANE.vox_goal, loaded_vox.goal)
-    VOXPANE.vox_ranks.set(loaded_vox.ranks)
-    FILEPATH.set(loaded_vox.image_filepath)
-
-    # Set up the flags of the signature skill checkbox
-    if loaded_vox.is_signature is True:
-        VOXPANE.vox_signature_variable.set(1)
-    else:
-        VOXPANE.vox_signature_variable.set(0)
-
-    # Apply loaded actions, step 1: we need a tuple of the action text boxes from the UI
-    action_widgets = VOXPANE.action_1, VOXPANE.action_2, VOXPANE.action_3
-
-    # Clear out the values in the text boxes
-    for each_widget in action_widgets:
-        each_widget.delete(1.0, END)
-
-    # Apply the new ones
-    for each_widget, each_action in zip(action_widgets, loaded_vox.actions):
-        set_widget_text(each_widget, each_action)
-
-    # Re-update the generated Vox image
-    generate_output()
-
-    # update the vox portrait in the file selector
-    update_loaded_portrait()
+    VOXPANE.read_from_vox(loaded_vox)
 
 
 def save_output():
@@ -280,11 +321,20 @@ def set_widget_text(text_widget, value):
     text_widget.insert(END, value)
 
 
+def update_attribute_intvar(*args):
+    """Updates the intvar associated with the attribute selector via trace call."""
+    try:
+        init_attribute_entry(VOXPANE.attribute_frame, VOXPANE.vox_attribute_variable)
+    except NameError:
+        pass
+
+
 def update_loaded_portrait():
     """Updates the portrait selector by loading from the FILEPATH"""
 
     VOXPANE.portrait_image_label, VOXPANE.portrait_image = win.init_displayed_image(VOXPANE.left_frame,
                                                                                 filepath=FILEPATH.get(),
+                                                                                image_scale=0.35,
                                                                                 columnspan=2)
 
 
@@ -296,9 +346,10 @@ class VoxPane:
 
         self.vox_name_variable = StringVar()
         self.vox_attribute_variable = StringVar()
+        self.vox_attribute_variable.trace('w', update_attribute_intvar)
         self.vox_ranks = IntVar(value=1)
         self.vox_signature_variable = IntVar(value=0)
-        self.right_frame, self.vox_goal, self.action_1, self.action_2, self.action_3 = \
+        self.right_frame, self.attribute_frame, self.vox_goal, self.action_1, self.action_2, self.action_3 = \
             init_entry_pane(self.parent_frame, self.vox_name_variable, self.vox_attribute_variable, self.vox_ranks, self.vox_signature_variable)
 
         self.bottom_frame, self.output_image_label, self.output_image = init_output_pane(self.parent_frame)
@@ -306,4 +357,36 @@ class VoxPane:
         self.output_full_size = None
 
 
+    def read_from_vox(self, vox_obj):
+        self.vox_name_variable.set(vox_obj.name)
+        self.vox_attribute_variable.set(vox_obj.attribute[0])
+        set_widget_text(self.vox_goal, vox_obj.goal)
+        self.vox_ranks.set(vox_obj.ranks)
+        FILEPATH.set(vox_obj.image_filepath)
+
+        # Set up the flags of the signature skill checkbox
+        if vox_obj.is_signature is True:
+            self.vox_signature_variable.set(1)
+        else:
+            self.vox_signature_variable.set(0)
+
+        # Apply loaded actions, step 1: we need a tuple of the action text boxes from the UI
+        action_widgets = self.action_1, self.action_2, self.action_3
+
+        # Clear out the values in the text boxes
+        for each_widget in action_widgets:
+            each_widget.delete(1.0, END)
+
+        # Apply the new ones
+        for each_widget, each_action in zip(action_widgets, vox_obj.actions):
+            set_widget_text(each_widget, each_action)
+
+        # Re-update the generated Vox image
+        generate_output()
+
+        # update the vox portrait in the file selector
+        update_loaded_portrait()
+
+
 VOXPANE = VoxPane()
+CHARPANE.vox_awaits_load_from_table.trace('w', load_from_callback)

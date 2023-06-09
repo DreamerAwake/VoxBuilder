@@ -6,10 +6,11 @@ from ttkthemes import ThemedTk
 from PIL import Image, ImageTk
 
 
-def init_tk_window(min_size=(800, 912)):
+def init_tk_window(min_size=(1521, 852)):
     """Initializes a tkinter Tk, returns it."""
     window_frame = ThemedTk(theme='yaru')
-    window_frame.title("LotLVoxBuilder")
+    window_frame.title("Legend of the Lamplighters: Character Builder")
+    window_frame.iconbitmap("imagefiles/LotL.ico")
 
     window_frame.columnconfigure(0, weight=1)
     window_frame.rowconfigure(0, weight=1)
@@ -24,7 +25,7 @@ INPUT_FONT = ("Arial", 10)
 INPUT_FONT_EXPANDED = ("Arial", 18, "bold")
 
 
-def init_displayed_image(parent, image=None, filepath=None, image_scale=0.5, column=0, row=0, columnspan=0):
+def init_displayed_image(parent, image=None, filepath=None, image_scale=0.5, column=0, row=0, **kwargs):
     """Creates the displayed image label and returns it with a basic placeholder image inside.
     May accept an ImageTK for display."""
     if image is None:
@@ -37,10 +38,7 @@ def init_displayed_image(parent, image=None, filepath=None, image_scale=0.5, col
     image = ImageTk.PhotoImage(image)
     image_label = tkLabel(parent, image=image)
 
-    if columnspan > 1:
-        image_label.grid(column=column, row=row, columnspan=columnspan)
-    else:
-        image_label.grid(column=column, row=row)
+    image_label.grid(column=column, row=row, **kwargs)
 
     return image_label, image
 
@@ -70,6 +68,3 @@ def intvar_minus_1(variable):
     if current_value > 0:
         variable.set(current_value - 1)
 
-
-if __name__ == "__main__":
-    ROOT.mainloop()

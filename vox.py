@@ -3,12 +3,13 @@ from PIL import Image
 import visualizer
 
 # Vox Attributes
-ATTR = {"Cerebra": ("Cerebra", (60, 70, 100)),
-        "Benedictum": ("Benedictum", (100, 95, 128)),
+ATTR = {"Benedictum": ("Benedictum", (100, 95, 128)),
+        "Cerebra": ("Cerebra", (60, 70, 100)),
+        "Endopulse": ("Endopulse", (220, 80, 175)),
         "Myomesmer": ("Myomesmer", (180, 60, 40)),
         "Psychoanima": ("Psychoanima", (210, 175, 75)),
         "Visiospatia": ("Visiospatia", (140, 215, 150)),
-        "Endopulse": ("Endopulse", (220, 80, 175))}
+        }
 
 
 class Vox:
@@ -22,6 +23,12 @@ class Vox:
         self.actions = actions
 
         self.image_filepath = vox_filepath
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __lt__(self, other):
+        return self.name < other.name
 
     def get_card_image(self, attribute_value):
         """Builds and returns the image of the card."""
@@ -58,6 +65,10 @@ class Vox:
         popout_image = Image.new("RGBA", (512, 768), (0, 0, 0, 0))
         popout_image.paste(Image.open(self.image_filepath))
 
+        # Draw the skill pips
+        popout_image.alpha_composite(visualizer.get_mini_title_pips_image(self.ranks), (0, 0))
+
+        # Draw the title plaque
         popout_image.alpha_composite(visualizer.get_mini_title_field_image(self, attribute_value), (0, 668))
 
         return popout_image
@@ -71,8 +82,11 @@ class Vox:
 
         return other_bonuses
 
+    def is_attr(self, attribute_name):
+        return attribute_name == self.attribute[0]
 
-    def save_json(self, filepath):
+    def save_dict(self):
+        """Returns a json compatible dict for saving."""
         save_dict = {"name": self.name,
                      "attribute": self.attribute[0],
                      "goal": self.goal,
@@ -81,14 +95,17 @@ class Vox:
                      "actions": self.actions,
                      "filepath": self.image_filepath}
 
+        return save_dict
+
+    def save_json(self, filepath):
+
+        save_dict = self.save_dict()
+
         with open(filepath, 'w', encoding='utf-8') as fileobject:
             json.dump(save_dict, fileobject)
 
 
-def load_from_json(filepath):
-    with open(filepath, 'r', encoding='utf-8') as fileobject:
-        load_dict = json.load(fileobject)
-
+def load_from_dict(load_dict):
     loaded_vox = Vox(load_dict["name"],
                      ATTR[load_dict["attribute"]],
                      load_dict["goal"],
@@ -96,6 +113,15 @@ def load_from_json(filepath):
                      load_dict["signature"],
                      *load_dict["actions"],
                      vox_filepath=load_dict["filepath"])
+
+    return loaded_vox
+
+
+def load_from_json(filepath):
+    with open(filepath, 'r', encoding='utf-8') as fileobject:
+        load_dict = json.load(fileobject)
+
+    loaded_vox = load_from_dict(load_dict)
 
     return loaded_vox
 

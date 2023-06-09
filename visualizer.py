@@ -7,6 +7,8 @@ TEXT_COLOR_LIGHT = (245, 245, 245, 255)
 UNDERTEXT_COLOR = (64, 64, 64, 180)
 TITLE_FONT = ImageFont.truetype("C:/Windows/Fonts/times.ttf", 60)
 TITLE_FONT_REDUCED = ImageFont.truetype("C:/Windows/Fonts/times.ttf", 40)
+TITLE_FONT_BOLD = ImageFont.truetype("C:/Windows/Fonts/timesbd.ttf", 60)
+TITLE_FONT_REDUCED_BOLD = ImageFont.truetype("C:/Windows/Fonts/timesbd.ttf", 40)
 ATTRIBUTE_FONT = ImageFont.truetype("C:/Windows/Fonts/timesi.ttf", 40)
 GOAL_FONT = ImageFont.truetype("C:/Windows/Fonts/timesi.ttf", 36)
 ACTION_FONT = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 30)
@@ -75,18 +77,18 @@ def get_title_field_image(vox_title, vox_attribute_label, vox_color, vox_attribu
     # Draw the vox title
     attribute_text_length = label_editor.textlength(attribute_label_string)
     label_editor.font = TITLE_FONT
-    vox_title_length = label_editor.textlength(vox_title.upper())
-    x_offset = 384 - attribute_text_length
+    vox_title_length = label_editor.textlength(vox_title)
+    x_offset = 384 - floor(attribute_text_length / 2)
     if is_signature:
-        x_offset += 80
+        x_offset += 20
 
-    if attribute_text_length + vox_title_length + 80 < 728:
-        label_editor.text((x_offset, 70), vox_title.upper(), fill=TEXT_COLOR_DARK, anchor="ms")
-    else:
+    if attribute_text_length + vox_title_length > 768 or (attribute_text_length + vox_title_length + 40 > 768 and is_signature):
         vox_goal_lines = chop_into_halves(vox_title)
         label_editor.font = TITLE_FONT_REDUCED
         label_editor.text((x_offset, 20), vox_goal_lines[0], fill=TEXT_COLOR_DARK, anchor="mt")
         label_editor.text((x_offset, 60), vox_goal_lines[1], fill=TEXT_COLOR_DARK, anchor="mt")
+    else:
+        label_editor.text((x_offset, 70), vox_title, fill=TEXT_COLOR_DARK, anchor="ms")
 
     return title_field_image
 
@@ -98,31 +100,46 @@ def get_mini_title_field_image(vox, vox_attribute_bonus):
 
     # If it is a signature vox, add the icon
     if vox.is_signature:
-        icon_image = Image.open("imagefiles/signature.png")
+        icon_image = Image.open("imagefiles/signature_invert.png")
         title_field_image.alpha_composite(icon_image, (20, 35))
 
     # Draw the totalbox
     title_field_image.paste(Image.open("imagefiles/totalbox.png"), (434, 0))
 
     # Draw the vox title
-    label_editor.font = TITLE_FONT_REDUCED
+    label_editor.font = TITLE_FONT_REDUCED_BOLD
     vox_title_length = label_editor.textlength(vox.name.upper())
-    x_offset = 178
+    x_offset = 217
     if vox.is_signature:
-        x_offset += 70
+        x_offset += 35
 
     if vox_title_length + 158 < 512 or (vox_title_length + 78 < 512 and not vox.is_signature):
-        label_editor.text((x_offset, 60), vox.name.upper(), fill=TEXT_COLOR_DARK, anchor="ms")
+        label_editor.text((x_offset, 65), vox.name.upper(), fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="ms")
     else:
-        vox_goal_lines = chop_into_halves(vox.name)
-        label_editor.text((x_offset, 15), vox_goal_lines[0], fill=TEXT_COLOR_DARK, anchor="mt")
-        label_editor.text((x_offset, 55), vox_goal_lines[1], fill=TEXT_COLOR_DARK, anchor="mt")
+        vox_goal_lines = chop_into_halves(vox.name.upper())
+        label_editor.text((x_offset, 15), vox_goal_lines[0], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="mt")
+        label_editor.text((x_offset, 55), vox_goal_lines[1], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="mt")
 
     skill_total = vox_attribute_bonus + vox.ranks + vox.get_other_bonuses()
     label_editor.font = TITLE_FONT
     label_editor.text((473, 80), str(skill_total), fill=TEXT_COLOR_LIGHT, anchor="ms")
 
     return title_field_image
+
+
+def get_mini_title_pips_image(skill_ranks):
+    skill_pip_image = Image.new("RGBA", (768, 60), (0, 0, 0, 0))
+
+    # Prepare to place the skill rank pips
+    pip_image = Image.open("imagefiles/pip.png").resize((50, 50))
+    pip_line_length = (50 * skill_ranks) - 0  # Assumes 50 pix wide pips and a 0 pix gap between each
+    place_at_x = floor((512 - pip_line_length) / 2)
+
+    for iteration in range(0, skill_ranks):
+        skill_pip_image.alpha_composite(pip_image, (place_at_x, 10))
+        place_at_x += 45
+
+    return skill_pip_image
 
 
 def get_goal_field_image(vox_goal):
