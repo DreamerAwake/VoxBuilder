@@ -1,6 +1,6 @@
 import window as win
 from tkinter import messagebox, Menu
-from tkinter.ttk import Frame
+from tkextensions import tkscrollableframe as tkscroll
 
 
 def get_vox_table_cells(char_pane, table_pane, sorted_voxes):
@@ -33,13 +33,14 @@ def get_voxes_of_attribute(vox_list, attribute_name):
 
 
 def init_table_pane(parent):
-    table_pane = Frame(parent)
-    table_pane.grid(column=0, row=3, sticky="nsew")
+    scroll_canvas = tkscroll.ScrollFrame(parent)
+    parent.rowconfigure(3, minsize=600)
+    scroll_canvas.grid(column=0, row=3, sticky="nsew", pady=10)
 
     for x in range(0, 6):
-        table_pane.columnconfigure(x, minsize=120)
+        scroll_canvas.viewPort.columnconfigure(x, minsize=120)
 
-    return table_pane
+    return scroll_canvas.viewPort
 
 
 def open_right_click_menu(*args):
@@ -78,6 +79,7 @@ def view_fullsize_vox(*args):
 class VoxTable:
     def __init__(self, char_pane_obj, parent, character_obj):
         self.char_pane = char_pane_obj
+        self.parent = parent
         self.table_pane = init_table_pane(parent)
 
         self.character = character_obj
@@ -90,8 +92,7 @@ class VoxTable:
     def reset_vox_cells(self):
         self.sort()
 
-        for each_element in self.table_pane.winfo_children():
-            each_element.destroy()
+        self.table_pane = init_table_pane(self.parent)
 
         self.vox_cells = get_vox_table_cells(self.char_pane,
                                              self.table_pane,

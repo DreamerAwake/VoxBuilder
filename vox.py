@@ -3,12 +3,12 @@ from PIL import Image
 import visualizer
 
 # Vox Attributes
-ATTR = {"Benedictum": ("Benedictum", (100, 95, 128)),
-        "Cerebra": ("Cerebra", (60, 70, 100)),
+ATTR = {"Benedictum": ("Benedictum", (110, 90, 140)),
+        "Cerebra": ("Cerebra", (80, 100, 192)),
         "Endopulse": ("Endopulse", (220, 80, 175)),
-        "Myomesmer": ("Myomesmer", (180, 60, 40)),
-        "Psychoanima": ("Psychoanima", (210, 175, 75)),
-        "Visiospatia": ("Visiospatia", (140, 215, 150)),
+        "Myomesmer": ("Myomesmer", (200, 60, 40)),
+        "Psychoanima": ("Psychoanima", (210, 190, 75)),
+        "Visiospatia": ("Visiospatia", (140, 230, 150)),
         }
 
 

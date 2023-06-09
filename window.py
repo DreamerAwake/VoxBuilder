@@ -1,5 +1,4 @@
 from math import floor
-from tkinter import Text
 from tkinter import Label as tkLabel
 from tkextensions import tktext_eventonmodify as tkext
 from tkinter.ttk import Entry
