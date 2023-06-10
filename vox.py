@@ -14,7 +14,7 @@ ATTR = {"Benedictum": ("Benedictum", (110, 90, 140)),
 
 class Vox:
     """Gets a vox object from a set of variables."""
-    def __init__(self, vox_name, vox_attribute, vox_goal, vox_ranks, is_signature, *actions, vox_filepath=None):
+    def __init__(self, vox_name, vox_attribute, vox_goal, vox_ranks, is_signature, *actions, vox_filepath="imagefiles/defaultvox.png"):
         self.name = vox_name
         self.attribute = vox_attribute
         self.goal = vox_goal

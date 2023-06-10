@@ -158,9 +158,12 @@ def init_entry_pane(window, vox_name_var, vox_attribute_var, vox_ranks_var, vox_
     attribute_frame = init_attribute_frame(main_frame, vox_attribute_var, column=1, row=1)
     init_ranks_frame(main_frame, vox_ranks_var, vox_signature_var, column=1, row=2)
     goal_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 40, 3, column=1, row=3, sticky="w")
-    action_1_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=4, sticky="nsew")
-    action_2_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=5, sticky="nsew")
-    action_3_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=6, sticky="nsew")
+    action_1_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=4, sticky="nsew", columnspan=2)
+    action_2_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=5, sticky="nsew", columnspan=2)
+    action_3_widget = win.init_text_widget(main_frame, win.INPUT_FONT, 60, 4, column=1, row=6, sticky="nsew", columnspan=2)
+
+    clear_button = Button(main_frame, text="* New Vox", command=load_blank_vox)
+    clear_button.grid(column=2, row=0)
 
     return main_frame, attribute_frame, goal_widget, action_1_widget, action_2_widget, action_3_widget
 
@@ -270,6 +273,14 @@ def load_from_callback(*args):
         CHARPANE.vox_awaits_load_from_table.set(0)
         generate_output(input_vox=CHARPANE.vox_to_load)
         CHARPANE.vox_to_load = None
+
+def load_blank_vox():
+    do_reset = messagebox.askyesno(title="* New Vox",
+                                   message="Are you sure you would like to discard unsaved changes and start a new Vox?")
+    if do_reset:
+        blank_vox = vox.Vox("", vox.ATTR["Benedictum"], "", 1, False)
+
+        VOXPANE.read_from_vox(blank_vox)
 
 def load_vox():
     # Load the .vox file

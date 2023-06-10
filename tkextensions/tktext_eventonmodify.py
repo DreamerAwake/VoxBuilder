@@ -15,10 +15,14 @@ class CustomText(tk.Text):
         self.tk.createcommand(self._w, self._proxy)
 
     def _proxy(self, command, *args):
+        # avoid error when deleting
+        if command == 'delete' and (args[0] == 'sel.first' and args[1] == 'sel.last'):
+            return
+
         cmd = (self._orig, command) + args
         result = self.tk.call(cmd)
 
-        if command in ("insert", "delete", "replace"):
-            self.event_generate("<<TextModified>>")
+        if command in ('insert', 'delete', 'replace'):
+            self.event_generate('<<TextModified>>')
 
         return result
