@@ -296,6 +296,15 @@ def load_vox():
     VOXPANE.read_from_vox(loaded_vox)
 
 
+def on_text_modification(*args, **kwargs):
+    """Runs when a text widget is changed."""
+    VOXPANE.vox_goal.edit_modified(False)
+    VOXPANE.action_1.edit_modified(False)
+    VOXPANE.action_2.edit_modified(False)
+    VOXPANE.action_3.edit_modified(False)
+    generate_output(*args, **kwargs)
+
+
 def save_output():
     """Saves the output image to a file."""
     output_filepath = filedialog.asksaveasfilename(defaultextension=".png")
@@ -359,7 +368,7 @@ def update_loaded_portrait():
 class VoxPane:
     def __init__(self):
         self.lock_generator = False  # Lock out for the image generator to prevent excess rendering
-
+        
         self.parent_frame = init_vox_pane(win.ROOT)
 
         self.left_frame, self.portrait_image_label, self.portrait_image = init_file_select_pane(self.parent_frame)
@@ -419,10 +428,10 @@ VOXPANE.vox_attribute_variable.trace('w', generate_output)
 VOXPANE.vox_ranks.trace('w', generate_output)
 VOXPANE.vox_signature_variable.trace('w', generate_output)
 FILEPATH.trace('w', generate_output)
-VOXPANE.vox_goal.bind('<<TextModified>>', generate_output)
-VOXPANE.action_1.bind('<<TextModified>>', generate_output)
-VOXPANE.action_2.bind('<<TextModified>>', generate_output)
-VOXPANE.action_3.bind('<<TextModified>>', generate_output)
+VOXPANE.vox_goal.bind('<<Modified>>', on_text_modification)
+VOXPANE.action_1.bind('<<Modified>>', on_text_modification)
+VOXPANE.action_2.bind('<<Modified>>', on_text_modification)
+VOXPANE.action_3.bind('<<Modified>>', on_text_modification)
 
 
 for each_value in CHARPANE.attunement_variables.values():
