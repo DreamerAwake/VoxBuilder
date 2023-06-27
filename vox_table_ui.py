@@ -35,6 +35,7 @@ def get_voxes_of_attribute(vox_list, attribute_name):
 def init_table_pane(parent):
     scroll_canvas = tkscroll.ScrollFrame(parent)
     parent.rowconfigure(3, minsize=500)
+    parent.columnconfigure(0, minsize=738)
     scroll_canvas.grid(column=0, row=3, sticky="nsew", pady=10)
 
     for x in range(0, 6):

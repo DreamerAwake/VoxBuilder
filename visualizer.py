@@ -3,12 +3,14 @@ from PIL import Image, ImageDraw, ImageFont
 
 # Fonts
 TEXT_COLOR_DARK = (10, 10, 10, 255)
+TEXT_COLOR_MIDTONE = (95, 95, 95, 255)
 TEXT_COLOR_LIGHT = (245, 245, 245, 255)
 UNDERTEXT_COLOR = (64, 64, 64, 180)
 TITLE_FONT = ImageFont.truetype("C:/Windows/Fonts/times.ttf", 60)
 TITLE_FONT_REDUCED = ImageFont.truetype("C:/Windows/Fonts/times.ttf", 40)
 TITLE_FONT_BOLD = ImageFont.truetype("C:/Windows/Fonts/timesbd.ttf", 60)
 TITLE_FONT_REDUCED_BOLD = ImageFont.truetype("C:/Windows/Fonts/timesbd.ttf", 40)
+TITLE_FONT_MINI = ImageFont.truetype("C:/Windows/Fonts/DejaVuSansCondensed.ttf", 40)
 ATTRIBUTE_FONT = ImageFont.truetype("C:/Windows/Fonts/timesi.ttf", 40)
 GOAL_FONT = ImageFont.truetype("C:/Windows/Fonts/timesi.ttf", 36)
 ACTION_FONT = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 30)
@@ -82,7 +84,7 @@ def get_title_field_image(vox_title, vox_attribute_label, vox_color, vox_attribu
     if is_signature:
         x_offset += 20
 
-    if attribute_text_length + vox_title_length > 768 or (attribute_text_length + vox_title_length + 40 > 768 and is_signature):
+    if attribute_text_length + vox_title_length > 700 or (attribute_text_length + vox_title_length + 40 > 700 and is_signature):
         vox_goal_lines = chop_into_halves(vox_title)
         label_editor.font = TITLE_FONT_REDUCED
         label_editor.text((x_offset, 20), vox_goal_lines[0], fill=TEXT_COLOR_DARK, anchor="mt")
@@ -107,18 +109,18 @@ def get_mini_title_field_image(vox, vox_attribute_bonus):
     title_field_image.paste(Image.open("imagefiles/totalbox.png"), (434, 0))
 
     # Draw the vox title
-    label_editor.font = TITLE_FONT_REDUCED_BOLD
+    label_editor.font = TITLE_FONT_MINI
     vox_title_length = label_editor.textlength(vox.name.upper())
     x_offset = 217
     if vox.is_signature:
         x_offset += 35
 
-    if vox_title_length + 158 < 512 or (vox_title_length + 78 < 512 and not vox.is_signature):
-        label_editor.text((x_offset, 65), vox.name.upper(), fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="ms")
+    if vox_title_length + 158 < 480 or (vox_title_length + 78 < 480 and not vox.is_signature):
+        label_editor.text((x_offset, 65), vox.name.upper(), fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_MIDTONE, anchor="ms")
     else:
         vox_goal_lines = chop_into_halves(vox.name.upper())
-        label_editor.text((x_offset, 15), vox_goal_lines[0], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="mt")
-        label_editor.text((x_offset, 55), vox_goal_lines[1], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_DARK, anchor="mt")
+        label_editor.text((x_offset, 15), vox_goal_lines[0], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_MIDTONE, anchor="mt")
+        label_editor.text((x_offset, 55), vox_goal_lines[1], fill=TEXT_COLOR_LIGHT, stroke_width=5, stroke_fill=TEXT_COLOR_MIDTONE, anchor="mt")
 
     skill_total = vox_attribute_bonus + vox.ranks + vox.get_other_bonuses()
     label_editor.font = TITLE_FONT

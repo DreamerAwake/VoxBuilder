@@ -385,7 +385,6 @@ class VoxPane:
 
         self.output_full_size = None
 
-
     def read_from_vox(self, vox_obj):
         self.lock_generator = True  # Lock the image generator to prevent excess rendering
 
