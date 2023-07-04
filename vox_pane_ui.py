@@ -342,12 +342,6 @@ def select_new_filepath():
                                message="The selected image is too large. Please select a Vox portrait that is no larger than 512x768 pixels.")
 
 
-def set_widget_text(text_widget, value):
-    """Overwrites a tkinter text widget's contents with the passed value."""
-    text_widget.delete(1.0, END)
-    text_widget.insert(END, value)
-
-
 def update_attribute_intvar(*args):
     """Updates the intvar associated with the attribute selector via trace call."""
     try:
@@ -390,7 +384,7 @@ class VoxPane:
 
         self.vox_name_variable.set(vox_obj.name)
         self.vox_attribute_variable.set(vox_obj.attribute[0])
-        set_widget_text(self.vox_goal, vox_obj.goal)
+        win.set_widget_text(self.vox_goal, vox_obj.goal)
         self.vox_ranks.set(vox_obj.ranks)
         FILEPATH.set(vox_obj.image_filepath)
 
@@ -409,7 +403,7 @@ class VoxPane:
 
         # Apply the new ones
         for each_widget, each_action in zip(action_widgets, vox_obj.actions):
-            set_widget_text(each_widget, each_action)
+            win.set_widget_text(each_widget, each_action)
 
         # Re-update the generated Vox image
         generate_output(unlock=True)

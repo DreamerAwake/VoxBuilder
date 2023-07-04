@@ -1,4 +1,6 @@
 import json
+import pathlib
+
 from PIL import Image
 import visualizer
 
@@ -35,7 +37,10 @@ class Vox:
         card_image = visualizer.load_bg()
 
         if self.image_filepath is not None:
-            card_image.paste(Image.open(self.image_filepath))
+            if pathlib.Path(self.image_filepath).is_file():
+                card_image.paste(Image.open(self.image_filepath))
+            else:
+                card_image.paste(Image.open("imagefiles/defaultvox.png"))
 
         y_offset = 0  # The amount to offset each new element downward to avoid overlaps
 
@@ -63,7 +68,11 @@ class Vox:
 
     def get_mini_popout_image(self, attribute_value):
         popout_image = Image.new("RGBA", (512, 768), (0, 0, 0, 0))
-        popout_image.paste(Image.open(self.image_filepath))
+
+        if pathlib.Path(self.image_filepath).is_file():
+            popout_image.paste(Image.open(self.image_filepath))
+        else:
+            popout_image.paste(Image.open("imagefiles/defaultvox.png"))
 
         # Draw the skill pips
         popout_image.alpha_composite(visualizer.get_mini_title_pips_image(self.ranks), (0, 0))

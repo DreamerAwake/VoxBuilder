@@ -1,5 +1,6 @@
+import pathlib
 from math import floor
-from tkinter import Label as tkLabel
+from tkinter import Label as tkLabel, END
 from tkinter import Text
 from tkinter.ttk import Entry
 from ttkthemes import ThemedTk
@@ -29,7 +30,7 @@ def init_displayed_image(parent, image=None, filepath=None, image_scale=0.5, col
     """Creates the displayed image label and returns it with a basic placeholder image inside.
     May accept an ImageTK for display."""
     if image is None:
-        if filepath is None:
+        if filepath is None or not pathlib.Path(filepath).is_file():
             image = Image.open("imagefiles/defaultvox.png")
         else:
             image = Image.open(filepath)
@@ -68,3 +69,8 @@ def intvar_minus_1(variable):
     if current_value > 0:
         variable.set(current_value - 1)
 
+
+def set_widget_text(text_widget, value):
+    """Overwrites a tkinter text widget's contents with the passed value."""
+    text_widget.delete(1.0, END)
+    text_widget.insert(END, value)
